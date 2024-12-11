@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-interface IChecks {
-    function ownerOf(uint256 tokenId) external view returns (address owner);
-    function compositeMany(uint256[] calldata tokenIds, uint256[] calldata burnIds) external;
-}
-
 /// @notice Composite single checks in one transaction.
 /// @author Visualize Value
 contract Compositor {
@@ -21,7 +16,7 @@ contract Compositor {
 
     /// @notice Composite multiple checks.
     /// @param tokenSets The token IDs to composite. The first one will be the keeper.
-    function composite(uint256[][] calldata tokenSets) external {
+    function composite(uint256[][] calldata tokenSets, bool simulate) external returns (string memory) {
         for (uint256 idx = 0; idx < tokenSets.length; idx++) {
             uint256[] memory tokenIds = tokenSets[idx];
 
@@ -32,6 +27,8 @@ contract Compositor {
             // Perform the composite Recursively.
             _composite(tokenIds);
         }
+
+        return simulate ? CHECKS.tokenURI(tokenSets[0][0]) : '';
     }
 
     /// @dev Recursively composite until only the first token is left.
@@ -65,12 +62,40 @@ contract Compositor {
 
     /// @dev Check token ownership. Even though the checks contract checks ownership,
     ///      we have to ensure ownership to prevent unintended cross-user composites.
-    function _checkOwnership(uint256[] memory tokenIds) internal {
-        uint256 amount = tokenIds.length;
-
-        for (uint256 idx = 0; idx < amount; idx++) {
+    function _checkOwnership(uint256[] memory tokenIds) internal view {
+        for (uint256 idx = 0; idx < tokenIds.length; idx++) {
             if (CHECKS.ownerOf(tokenIds[idx]) != msg.sender) revert InvalidTokenOwnership();
         }
     }
+}
+
+interface IChecks {
+    struct StoredCheck {
+        uint16[6] composites;
+        uint8[5] colorBands;
+        uint8[5] gradients;
+        uint8 divisorIndex;
+        uint32 epoch;
+        uint16 seed;
+        uint24 day;
+    }
+
+    struct Check {
+        StoredCheck stored;
+        bool isRevealed;
+        uint256 seed;
+        uint8 checksCount;
+        bool hasManyChecks;
+        uint16 composite;
+        bool isRoot;
+        uint8 colorBand;
+        uint8 gradient;
+        uint8 direction;
+        uint8 speed;
+    }
+
+    function ownerOf(uint256 tokenId) external view returns (address owner);
+    function compositeMany(uint256[] calldata tokenIds, uint256[] calldata burnIds) external;
+    function tokenURI(uint256 tokenId) external view returns (string memory);
 }
 

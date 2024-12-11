@@ -10,24 +10,19 @@ import 'hardhat-contract-sizer'
 import './tasks/accounts'
 import './tasks/chain'
 import './tasks/export-abis'
-import './tasks/interact'
 
 dotenv.config()
 
 const LEDGER_ACCOUNTS: string[]|undefined = process.env.LEDGER_ACCOUNT ? [process.env.LEDGER_ACCOUNT] : undefined
 const ACCOUNT_PRVKEYS: string[]|undefined = process.env.PRIVATE_KEY    ? [process.env.PRIVATE_KEY   ] : undefined
-const DEPLOY_AUTH: string = process.env.DEPLOY_AUTH || zeroAddress
-const REDEPLOY_PROTECTION: string = process.env.REDEPLOY_PROTECTION === 'true' ? `01` : `00`
-const ENTROPY: string = process.env.ENTROPY || `0000000000000000000009`
-const SALT: string = `${DEPLOY_AUTH}${REDEPLOY_PROTECTION}${ENTROPY}`
 
 const HARDHAT_NETWORK_CONFIG: HardhatNetworkUserConfig = {
   chainId: 1337,
   ledgerAccounts: LEDGER_ACCOUNTS,
   forking: {
-    enabled: process.env.FORK_MAINNET === 'true',
+    enabled: true,
     url: process.env.MAINNET_URL || '',
-    blockNumber: 20000000,
+    blockNumber: 21374700,
   },
 }
 
@@ -63,20 +58,15 @@ const config: HardhatUserConfig = {
     hardhat: HARDHAT_NETWORK_CONFIG,
   },
   gasReporter: {
-    enabled: process.env.REPORT_GAS !== undefined,
+    enabled: process.env.REPORT_GAS === 'true',
     coinmarketcap: process.env.COINMARKETCAP_API_KEY,
     currency: 'USD',
-    gasPrice: 2,
+    gasPrice: 12,
   },
   contractSizer: {
     alphaSort: true,
   },
   ignition: {
-    strategyConfig: {
-      create2: {
-        salt: SALT,
-      },
-    },
   },
   etherscan: {
     apiKey: {
