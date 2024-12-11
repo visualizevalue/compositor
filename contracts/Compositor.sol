@@ -16,7 +16,7 @@ contract Compositor {
 
     /// @notice Composite multiple checks.
     /// @param tokenSets The token IDs to composite. The first one will be the keeper.
-    function composite(uint256[][] calldata tokenSets, bool simulate) external returns (string memory) {
+    function composite(uint256[][] calldata tokenSets) public {
         for (uint256 idx = 0; idx < tokenSets.length; idx++) {
             uint256[] memory tokenIds = tokenSets[idx];
 
@@ -27,8 +27,14 @@ contract Compositor {
             // Perform the composite Recursively.
             _composite(tokenIds);
         }
+    }
 
-        return simulate ? CHECKS.tokenURI(tokenSets[0][0]) : '';
+    /// @notice Helper for simulating the result of a composite.
+    /// @param tokenSets The token IDs to composite. The first one will be the keeper.
+    function compositeAndRender(uint256[][] calldata tokenSets) external returns (string memory) {
+        composite(tokenSets);
+
+        return CHECKS.tokenURI(tokenSets[0][0]);
     }
 
     /// @dev Recursively composite until only the first token is left.

@@ -19,7 +19,7 @@ describe('Compositor', async () => {
 
   it('should allow compositing 2 tokens to a 40 check', async () => {
     await expect(compositor.write.composite(
-      [[[ HOLDER_CHECKS_80[0], HOLDER_CHECKS_80[1] ]], false],
+      [[[ HOLDER_CHECKS_80[0], HOLDER_CHECKS_80[1] ]]],
       { account: HOLDER }
     ))
       .to.emit(checks, 'Composite')
@@ -32,7 +32,7 @@ describe('Compositor', async () => {
 
   it('should allow compositing 4 tokens to a 20 check', async () => {
     await expect(compositor.write.composite(
-      [[ HOLDER_CHECKS_80.slice(0, 4) ], false],
+      [[ HOLDER_CHECKS_80.slice(0, 4) ]],
       { account: HOLDER }
     ))
       .to.emit(checks, 'Composite')
@@ -49,7 +49,7 @@ describe('Compositor', async () => {
 
   it('should allow compositing 64 tokens to a single check', async () => {
     await expect(compositor.write.composite(
-      [[ HOLDER_CHECKS_80.slice(0, 64) ], false],
+      [[ HOLDER_CHECKS_80.slice(0, 64) ]],
       { account: HOLDER }
     ))
       .to.emit(checks, 'Composite')
@@ -66,8 +66,8 @@ describe('Compositor', async () => {
     const { result: tokenURI } = await publicClient.simulateContract({
       address: compositor.address,
       abi: compositor.abi,
-      functionName: 'composite',
-      args: [[ HOLDER_CHECKS_80.slice(0, 64) ], true],
+      functionName: 'compositeAndRender',
+      args: [[ HOLDER_CHECKS_80.slice(0, 64) ]],
       account: HOLDER,
     })
 
@@ -79,19 +79,19 @@ describe('Compositor', async () => {
 
   it('should prevent compositing and uneven number of tokens', async () => {
     await expect(compositor.write.composite(
-      [[[ HOLDER_CHECKS_80[0], HOLDER_CHECKS_80[1], HOLDER_CHECKS_80[2] ]], false],
+      [[[ HOLDER_CHECKS_80[0], HOLDER_CHECKS_80[1], HOLDER_CHECKS_80[2] ]]],
       { account: HOLDER }
     ))
       .to.be.revertedWithCustomError(compositor, 'InvalidTokenCount')
 
     await expect(compositor.write.composite(
-      [[[ HOLDER_CHECKS_80[0] ]], false],
+      [[[ HOLDER_CHECKS_80[0] ]]],
       { account: HOLDER }
     ))
       .to.be.revertedWithCustomError(compositor, 'InvalidTokenCount')
 
     await expect(compositor.write.composite(
-      [[ HOLDER_CHECKS_80 ], false],
+      [[ HOLDER_CHECKS_80 ]],
       { account: HOLDER }
     ))
       .to.be.revertedWithCustomError(compositor, 'InvalidTokenCount')
