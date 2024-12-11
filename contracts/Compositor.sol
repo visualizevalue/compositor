@@ -17,28 +17,20 @@ contract Compositor {
     /// @notice Composite multiple checks.
     /// @param tokenSets The token IDs to composite. The first one will be the keeper.
     function composite(uint256[][] calldata tokenSets) public {
-        for (uint256 idx = 0; idx < tokenSets.length; idx++) {
-            uint256[] memory tokenIds = tokenSets[idx];
-
-            // Make sure we have a compositable number of tokens all owned by the user.
-            _checkAmount(tokenIds.length);
-            _checkOwnership(tokenIds);
-
-            // Perform the composite Recursively.
-            _composite(tokenIds);
-        }
+        for (uint256 idx = 0; idx < tokenSets.length; idx++) _composite(tokenSets[idx]);
     }
 
     /// @notice Helper for simulating the result of a composite.
     /// @param tokenSets The token IDs to composite. The first one will be the keeper.
-    function compositeAndRender(uint256[][] calldata tokenSets) external returns (string memory) {
+    function compositeAndRender(uint256[][] calldata tokenSets) external returns (string memory tokenURI) {
         composite(tokenSets);
-
-        return CHECKS.tokenURI(tokenSets[0][0]);
+        tokenURI = CHECKS.tokenURI(tokenSets[tokenSets.length - 1][0]);
     }
 
     /// @dev Recursively composite until only the first token is left.
     function _composite(uint256[] memory tokenIds) internal {
+        _validateComposite(tokenIds);
+
         (uint256[] memory first, uint256[] memory second) = _split(tokenIds);
 
         CHECKS.compositeMany(first, second);
@@ -61,18 +53,18 @@ contract Compositor {
         return (first, second);
     }
 
-    /// @dev Check if n is greater than 0, a power of 2, and <= 64.
-    function _checkAmount(uint256 n) internal pure {
+    /// @dev Validate whether a composite is valid.
+    function _validateComposite(uint256[] memory tokenIds) internal view {
+        uint256 n = tokenIds.length;
+        // Tokens count is valid if n >= 2, a power of 2, and <= 64.
         if (n < 2 || (n & (n - 1)) != 0 || n > 64) revert InvalidTokenCount();
-    }
 
-    /// @dev Check token ownership. Even though the checks contract checks ownership,
-    ///      we have to ensure ownership to prevent unintended cross-user composites.
-    function _checkOwnership(uint256[] memory tokenIds) internal view {
-        for (uint256 idx = 0; idx < tokenIds.length; idx++) {
+        // We have to double check ownership to prevent unintended cross-user composites.
+        for (uint256 idx = 0; idx < n; idx++) {
             if (CHECKS.ownerOf(tokenIds[idx]) != msg.sender) revert InvalidTokenOwnership();
         }
     }
+
 }
 
 interface IChecks {

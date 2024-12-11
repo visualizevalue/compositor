@@ -4,7 +4,15 @@ import { encodeAbiParameters } from 'viem'
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import { compositorFixture } from './fixtures'
 import { decodeBase64URI } from '../helpers/decode-uri'
-import { HOLDER, HOLDER_CHECKS_80, CHECK_COMPOSITE_IMAGE } from './constants'
+import {
+  HOLDER,
+  HOLDER_CHECKS_80,
+  HOLDER_CHECK_COMPOSITE_IMAGE,
+  JALIL_VAULT,
+  JALIL_CHECKS_20,
+  JALIL_CHECKS_40,
+  JALIL_CHECKS_80,
+} from './constants'
 
 describe('Compositor', async () => {
   let checks, compositor, publicClient
@@ -74,7 +82,7 @@ describe('Compositor', async () => {
     const data = decodeBase64URI(tokenURI)
 
     expect(data.name).to.equal(`Checks 10314`)
-    expect(data.image).to.equal(CHECK_COMPOSITE_IMAGE)
+    expect(data.image).to.equal(HOLDER_CHECK_COMPOSITE_IMAGE)
   })
 
   it('should prevent compositing and uneven number of tokens', async () => {
@@ -98,8 +106,36 @@ describe('Compositor', async () => {
   })
 
   it('should allow compositing multiple sets of tokens with different checks counts', async () => {
+    await expect(compositor.write.composite(
+      [[
+        [...JALIL_CHECKS_80],
+        [JALIL_CHECKS_40[0], JALIL_CHECKS_80[0]],
+        [JALIL_CHECKS_20[0], JALIL_CHECKS_40[0]],
+      ]],
+      { account: JALIL_VAULT }
+    ))
+      .to.emit(checks, 'Composite')
+      .withArgs(JALIL_CHECKS_80[0], JALIL_CHECKS_80[1], 40)
+      .to.emit(checks, 'Composite')
+      .withArgs(JALIL_CHECKS_40[0], JALIL_CHECKS_80[0], 20)
+      .to.emit(checks, 'Composite')
+      .withArgs(JALIL_CHECKS_20[0], JALIL_CHECKS_40[0], 10)
   })
 
   it('should prevent compositing other peoples\' tokens', async () => {
+    await expect(compositor.write.composite(
+      [[
+        [...JALIL_CHECKS_80, ...HOLDER_CHECKS_80.slice(0, 2)],
+      ]],
+      { account: HOLDER }
+    ))
+      .to.be.revertedWithCustomError(compositor, 'InvalidTokenOwnership')
+
+    await expect(compositor.write.composite(
+      [[
+        JALIL_CHECKS_80
+      ]],
+    ))
+      .to.be.revertedWithCustomError(compositor, 'InvalidTokenOwnership')
   })
 })
