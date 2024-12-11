@@ -24,6 +24,7 @@ contract Compositor {
     /// @param tokenSets The token IDs to composite. The first one will be the keeper.
     function compositeAndRender(uint256[][] calldata tokenSets) external returns (string memory tokenURI) {
         composite(tokenSets);
+
         tokenURI = CHECKS.tokenURI(tokenSets[tokenSets.length - 1][0]);
     }
 
@@ -56,6 +57,7 @@ contract Compositor {
     /// @dev Validate whether a composite is valid.
     function _validateComposite(uint256[] memory tokenIds) internal view {
         uint256 n = tokenIds.length;
+
         // Tokens count is valid if n >= 2, a power of 2, and <= 64.
         if (n < 2 || (n & (n - 1)) != 0 || n > 64) revert InvalidTokenCount();
 
@@ -64,7 +66,6 @@ contract Compositor {
             if (CHECKS.ownerOf(tokenIds[idx]) != msg.sender) revert InvalidTokenOwnership();
         }
     }
-
 }
 
 interface IChecks {
